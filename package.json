@@ -1,0 +1,24 @@
+{
+  "name": "com.akaal.consoled",
+  "displayName": "Consoled",
+  "description": "Consoled lets you run functions for debugging or cheats during the editor and at runtime.",
+  "version": "0.0.1",
+  "unity": "2018.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/h-sigma/Consoled.git"
+  },
+  "author": {
+    "name": "Harshdeep Singh",
+    "email": "harsh@aka.al",
+    "url": "https://github.com/h-sigma"
+  },
+  "dependencies": {},
+  "keywords": [
+    "console",
+    "debug",
+    "cheats",
+    "commands"
+  ]
+}
