@@ -1,8 +1,9 @@
 ﻿using System;
+using Akaal.Consoled.Attributes;
 
 namespace Akaal.Consoled.Commands
 {
-    [CommandPrefix("unity-")]
+    [CommandModule("Common Unity Operations","unity")]
     public static class ConsoledUnityCommands
     {
         [Command("find", "find an object by type.")]

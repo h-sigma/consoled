@@ -1,0 +1,17 @@
+{
+    "name": "Akaal.Consoled.Editor",
+    "references": [
+        "GUID:7b7ac7ad122839d4e8cdc4082d0881ca"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Akaal.Consoled.Attributes;
 using UnityEngine;
 
 namespace Akaal.Consoled.Commands
@@ -12,15 +15,18 @@ namespace Akaal.Consoled.Commands
         }
 
         [Command("help", "lists all commands registered.")]
-        public static void ListAllCommands(Context ctx, bool details = false)
+        public static void ListAllCommands(Context ctx, string moduleName = null, bool showDescription = false)
         {
-            var commands = ctx.CommandLibrary.GetAllCommands();
+            var commands = ctx.CommandLibrary.GetCommandsByModule();
             var sb       = new StringBuilder();
-            foreach (Command command in commands)
+            foreach (var module in commands)
             {
-                sb.Append("\n  ").Append(command.CommandName);
-                if (details)
+                if (!string.IsNullOrEmpty(moduleName) && !module.Key.ModuleName.ToLower().Contains(moduleName)) continue;
+
+                sb.Append("\n  ").Append(module.Key.ModuleName);
+                foreach (Command command in module.Value)
                 {
+                    sb.Append("\n      ").Append(command.CommandName);
                     for (int index = 0; index < command.Parameters.Length; index++)
                     {
                         bool first = index == 0;
@@ -31,26 +37,25 @@ namespace Akaal.Consoled.Commands
                         {
                             if (par.ParameterType == typeof(Context))
                             {
-                                if (command.Parameters.Length > 1) sb.Append('(');
+                                //if (command.Parameters.Length > 1) sb.Append('(');
                                 continue;
                             }
                         }
 
-                        sb.Append(par.ParameterType.Name).Append(' ');
-                        sb.Append(par.Name);
+                        //sb.Append(par.ParameterType.Name).Append(' ');
+                        char left  = par.IsRequired ? '<' : '_';
+                        char right = par.IsRequired ? '>' : '_';
+                        sb.Append(' ').Append(left).Append(par.Name).Append(right);
 
-                        if (!par.IsRequired)
-                        {
-                            sb.Append(" = ");
-                            sb.Append(par.DefaultValue);
-                        }
+                        //if (!last) sb.Append(", ");
+                        //else sb.Append(')');
+                    }
 
-                        if (!last) sb.Append(", ");
-                        else sb.Append(')');
+                    if (showDescription)
+                    {
+                        sb.Append(":\t").Append(command.Attr.Description).Append('\t');
                     }
                 }
-
-                sb.Append(":\t").Append(command.Attr.Description).Append('\t');
             }
 
             ctx.Console.WriteOut(sb.ToString(), Color.HSVToRGB(0.83f, 0.01f, 0.76f));

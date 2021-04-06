@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using Akaal.Consoled.Attributes;
 
 namespace Akaal.Consoled.Commands
 {
@@ -15,7 +16,7 @@ namespace Akaal.Consoled.Commands
             ParameterType = parameterType;
             IsRequired    = isRequired;
             Name          = name;
-            DefaultValue = defaultValue;
+            DefaultValue  = defaultValue;
         }
     }
 
@@ -26,6 +27,7 @@ namespace Akaal.Consoled.Commands
         public CommandAttribute Attr           { get; }
         public string           CommandName    { get; }
         public MemberInfo       memberInfo     { get; }
+        public Type             InstanceType   { get; }
         public bool             HasReturnValue { get; }
         public bool             RequiresTarget { get; }
         public Parameter[]      Parameters     { get; }
@@ -42,6 +44,10 @@ namespace Akaal.Consoled.Commands
             CommandName    = commandName;
             HasReturnValue = methodInfo.ReturnType != typeof(void);
             RequiresTarget = !methodInfo.IsStatic;
+            if (RequiresTarget)
+            {
+                InstanceType = methodInfo.DeclaringType;
+            }
 
             var methodParams = methodInfo.GetParameters();
             ExpectsContext = methodParams.Length > 0 && methodParams[0].ParameterType == typeof(Context);
@@ -56,8 +62,14 @@ namespace Akaal.Consoled.Commands
             CommandName     = commandName;
             HasReturnValue  = true;
             RequiresTarget  = !fieldInfo.IsStatic;
-            ExpectsContext  = false;
-            Parameters      = new[] {new Parameter(fieldInfo.FieldType, true, fieldInfo.Name, fieldInfo.FieldType.PseudoDefault())};
+            if (RequiresTarget)
+            {
+                InstanceType = fieldInfo.DeclaringType;
+            }
+
+            ExpectsContext = false;
+            Parameters = new[]
+                {new Parameter(fieldInfo.FieldType, true, fieldInfo.Name, fieldInfo.FieldType.PseudoDefault())};
         }
 
         public Command(PropertyInfo propertyInfo, CommandAttribute attr, string commandName)
@@ -68,16 +80,26 @@ namespace Akaal.Consoled.Commands
             HasReturnValue = propertyInfo.CanRead;
             RequiresTarget = (propertyInfo.CanRead ? propertyInfo.GetMethod.IsStatic : propertyInfo.SetMethod.IsStatic);
             ExpectsContext = false;
+            if (RequiresTarget)
+            {
+                InstanceType = propertyInfo.DeclaringType;
+            }
+
             Parameters = propertyInfo.CanWrite
-                ? new[] {new Parameter(propertyInfo.PropertyType, false, propertyInfo.Name, propertyInfo.PropertyType.PseudoDefault())}
+                ? new[]
+                {
+                    new Parameter(propertyInfo.PropertyType, false, propertyInfo.Name,
+                        propertyInfo.PropertyType.PseudoDefault())
+                }
                 : Array.Empty<Parameter>();
         }
 
-        public static Command CreateCommand<T>(T memberInfo, CommandAttribute attr, string commandName) where T : MemberInfo
+        public static Command CreateCommand<T>(T memberInfo, CommandAttribute attr, string commandName)
+            where T : MemberInfo
         {
-            if (memberInfo is MethodInfo methodInfo) return new Command(methodInfo, attr, commandName);
+            if (memberInfo is MethodInfo methodInfo) return new Command(methodInfo,       attr, commandName);
             if (memberInfo is PropertyInfo propertyInfo) return new Command(propertyInfo, attr, commandName);
-            if (memberInfo is FieldInfo fieldInfo) return new Command(fieldInfo, attr, commandName);
+            if (memberInfo is FieldInfo fieldInfo) return new Command(fieldInfo,          attr, commandName);
             throw new Exception("Only fields, properties, and methods are supported.");
         }
 
@@ -85,9 +107,12 @@ namespace Akaal.Consoled.Commands
 
         public object Execute(Context context, object target, object[] parameters)
         {
-            if (RequiresTarget && target == null)
+            if (RequiresTarget)
             {
-                throw new Exception($"Command {Attr.CommandName} requires a target.");
+                if (InstanceType != null && !InstanceType.IsInstanceOfType(target))
+                {
+                    throw new Exception($"Command {Attr.CommandName} requires a target of type '{InstanceType.Name}'.");
+                }
             }
 
             if (ExpectsContext)

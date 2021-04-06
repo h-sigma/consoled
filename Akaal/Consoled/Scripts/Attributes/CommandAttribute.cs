@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Akaal.Consoled
+namespace Akaal.Consoled.Attributes
 {
     #region Attribute
 

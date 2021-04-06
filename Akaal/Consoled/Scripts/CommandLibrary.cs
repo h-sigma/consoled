@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using Akaal.Consoled.Attributes;
 using Akaal.Consoled.Commands;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -15,8 +16,11 @@ namespace Akaal.Consoled
         private readonly List<Command>               _commands       = new List<Command>();
         private readonly Dictionary<string, Command> _commandsByName = new Dictionary<string, Command>();
 
-        private readonly Dictionary<Type, CommandPrefixAttribute> _prefixes =
-            new Dictionary<Type, CommandPrefixAttribute>();
+        private readonly Dictionary<Type, CommandModule> _prefixes =
+            new Dictionary<Type, CommandModule>();
+
+        private readonly Dictionary<CommandModule, List<Command>>
+            _commandsByModule = new Dictionary<CommandModule, List<Command>>();
 
         public bool IsReady { get; private set; }
 
@@ -46,9 +50,9 @@ namespace Akaal.Consoled
                 Profiler.BeginSample("Consoled.LoadCommands");
 
 
-                foreach (Type commandClass in TypesCache.GetClassesWithAttribute<CommandPrefixAttribute>())
+                foreach (Type commandClass in TypesCache.GetClassesWithAttribute<CommandModule>())
                 {
-                    _prefixes.Add(commandClass, commandClass.GetCustomAttribute<CommandPrefixAttribute>());
+                    _prefixes.Add(commandClass, commandClass.GetCustomAttribute<CommandModule>());
                 }
 
                 ExtractCommandsFromInfos(TypesCache.GetFieldsWithAttribute<CommandAttribute>());
@@ -66,38 +70,51 @@ namespace Akaal.Consoled
         {
             foreach (var info in commandFields)
             {
-                bool    hasPrefix = GetAttrs(info, out var attr, out var prefixAttr, out var commandName);
+                bool    hasPrefix = GetAttrs(info, out var attr, out var module, out var commandName);
                 Command command   = Command.CreateCommand(info, attr, commandName);
                 _commands.Add(command);
-                string prefix = prefixAttr?.Prefix;
-                AddCommand(hasPrefix, prefix, attr.CommandName, command);
+                if (module == null) module = CommandModule.DefaultModule;
+                if (!_commandsByModule.TryGetValue(module, out var cmds))
+                {
+                    cmds                      = new List<Command>();
+                    _commandsByModule[module] = cmds;
+                }
+
+                cmds.Add(command);
+
+                AddCommand(commandName, command);
                 foreach (string alias in attr.Aliases)
                 {
-                    AddCommand(hasPrefix, prefix, alias, command);
+                    AddCommand(alias, command);
                 }
             }
         }
 
-        private bool GetAttrs<TInfo>(TInfo info, out CommandAttribute attr, out CommandPrefixAttribute prefixAttribute,
+        private bool GetAttrs<TInfo>(TInfo info, out CommandAttribute attr, out CommandModule module,
             out string commandName)
             where TInfo : MemberInfo
         {
             attr = info.GetCustomAttribute<CommandAttribute>();
-            bool hasPrefix = _prefixes.TryGetValue(info.DeclaringType, out prefixAttribute);
-            commandName = hasPrefix ? prefixAttribute.Prefix + attr.CommandName : attr.CommandName;
+            bool hasPrefix = _prefixes.TryGetValue(info.DeclaringType, out module);
+            commandName = hasPrefix ? CombinePrefixAndName(module.Prefix, attr.CommandName) : attr.CommandName;
             return hasPrefix;
         }
 
-        public void AddCommand(bool hasPrefix, string prefix, string alias, Command command)
+        private string CombinePrefixAndName(string prefix, string alias)
         {
-            string key = hasPrefix ? prefix + alias : alias;
-            if (_commandsByName.ContainsKey(key))
+            return string.IsNullOrEmpty(prefix) ? alias : $"{prefix}-{alias}";
+        }
+
+        public void AddCommand(string alias, Command command)
+        {
+            if (_commandsByName.ContainsKey(alias))
             {
                 Debug.LogWarning(
-                    $"Consoled contains duplicate commands by name {key}: {command.memberInfo.Name} and {_commandsByName[key].memberInfo.Name}. One of them will be omitted.");
+                    $"Consoled contains duplicate commands by alias {alias}: {command.memberInfo.Name} and {_commandsByName[alias].memberInfo.Name}. One of them will be omitted.");
+                return;
             }
 
-            _commandsByName[key] = command;
+            _commandsByName[alias] = command;
         }
 
         public Command GetCommand(string commandName)
@@ -110,6 +127,17 @@ namespace Akaal.Consoled
         public IReadOnlyList<Command> GetAllCommands()
         {
             return _commands;
+        }
+
+        public Dictionary<CommandModule, IReadOnlyList<Command>> GetCommandsByModule()
+        {
+            var dict = new Dictionary<CommandModule, IReadOnlyList<Command>>();
+            foreach (KeyValuePair<CommandModule, List<Command>> keyValuePair in _commandsByModule)
+            {
+                dict[keyValuePair.Key] = keyValuePair.Value;
+            }
+
+            return dict;
         }
     }
 }

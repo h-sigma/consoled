@@ -111,7 +111,7 @@ namespace Akaal.Consoled
                     if (command.Parameters[i].IsRequired)
                     {
                         WriteOut(
-                            $"\nToo few arguments to command. Expected at least {i + 1}. Received {arguments.Length}.",
+                            $"\nToo few arguments to command. Expected at least {i}. Received {arguments.Length}.",
                             Colors.Error);
                         return;
                     }
