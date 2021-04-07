@@ -11,11 +11,20 @@ namespace Akaal.Consoled.Editor
         public static void ShowExample()
         {
             ConsoledWindow wnd = GetWindow<ConsoledWindow>();
-            wnd.titleContent = new GUIContent("ConsoledWindow");
+            wnd.titleContent = new GUIContent("Consoled");
+        }
+
+        private bool _didCreate;
+
+        private void OnEnable()
+        {
+            CreateGUI();
         }
 
         public void CreateGUI()
         {
+            if (_didCreate) return;
+            _didCreate = true;
             // Each editor window contains a root VisualElement object
             VisualElement root = rootVisualElement;
             root.AddToClassList("root");
@@ -37,8 +46,15 @@ namespace Akaal.Consoled.Editor
             HandleStatus();
         }
 
+        private void OnDisable()
+        {
+            OnDestroy();
+        }
+
         private void OnDestroy()
         {
+            if (!_didCreate) return;
+            _didCreate = false;
             DetachOutput();
         }
 
