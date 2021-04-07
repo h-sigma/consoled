@@ -46,16 +46,52 @@ namespace Akaal.Consoled.Adapters
             list.Add(adapter);
         }
 
-        public bool TryAdaptValue(Type targetType, object valueToAdapt, out object adaptedValue, out string errorMessage)
+        public bool TryAdaptValue(Type targetType, object valueToAdapt, out object adaptedValue,
+            out string errorMessage)
         {
             adaptedValue = null;
             errorMessage = null;
-            if (_adaptersByTargetType.TryGetValue(targetType, out var adapters))
+            if (typeof(Enum).IsAssignableFrom(targetType))
             {
-                for (var i = 0; i < adapters.Count; i++)
+                return TryAdaptEnum(targetType, valueToAdapt, out adaptedValue, out errorMessage);
+            }
+            else if (_adaptersByTargetType.TryGetValue(targetType, out var adapters))
+            {
+                foreach (IValueAdapter adapter in adapters)
                 {
-                    if (adapters[i].TryAdaptValue(valueToAdapt, out adaptedValue, out errorMessage)) return true;
+                    if (adapter.TryAdaptValue(valueToAdapt, out adaptedValue, out errorMessage)) return true;
                 }
+            }
+
+            return false;
+        }
+
+        private bool TryAdaptEnum(Type targetType, object valueToAdapt, out object adaptedValue,
+            out string errorMessage)
+        {
+            adaptedValue = null;
+            errorMessage = null;
+            if (valueToAdapt is string enumName)
+            {
+                try
+                {
+                    adaptedValue = Enum.Parse(targetType, enumName, true);
+                    if (adaptedValue != null)
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                    //
+                }
+
+                errorMessage = $"Name '{enumName}' could not be parsed into enum of type {targetType.Name}";
+            }
+            else
+            {
+                errorMessage =
+                    $"Value of type {adaptedValue?.GetType().Name} could not be adapted to target of type {targetType.Name}.";
             }
 
             return false;
