@@ -7,14 +7,16 @@ namespace Akaal.Consoled.Editor
 {
     public class ConsoledWindow : EditorWindow
     {
+        #region Window
+
         [MenuItem("Window/Tools/Consoled")]
         public static void ShowExample()
         {
-            ConsoledWindow wnd = GetWindow<ConsoledWindow>();
-            wnd.titleContent = new GUIContent("Consoled");
+            ConsoledWindow wnd = CreateWindow<ConsoledWindow>();
+            wnd.titleContent = new GUIContent("Consoled", ConsoledResources.LogoTexture());
         }
 
-        private bool _didCreate;
+        #region Window Callbacks
 
         private void OnEnable()
         {
@@ -23,27 +25,7 @@ namespace Akaal.Consoled.Editor
 
         public void CreateGUI()
         {
-            if (_didCreate) return;
-            _didCreate = true;
-            // Each editor window contains a root VisualElement object
-            VisualElement root = rootVisualElement;
-            root.AddToClassList("root");
-
-            // Import UXML
-            var visualTree =
-                Resources.Load<VisualTreeAsset>(
-                    "ConsoledWindow");
-            visualTree.CloneTree(root);
-
-            // A stylesheet can be added to a VisualElement.
-            // The style will be applied to the VisualElement and all of its children.
-            var styleSheet =
-                Resources.Load<StyleSheet>("ConsoledWindow_USS");
-            root.styleSheets.Add(styleSheet);
-
-            AttachInput();
-            AttachOutput();
-            HandleStatus();
+            Create();
         }
 
         private void OnDisable()
@@ -52,6 +34,50 @@ namespace Akaal.Consoled.Editor
         }
 
         private void OnDestroy()
+        {
+            Destroy();
+        }
+
+        #endregion
+
+        #endregion
+
+        private bool             _didCreate;
+        private ConsoledInstance _instance = new ConsoledInstance(); //todo -- serialize this!
+
+        private void Create()
+        {
+            if (_didCreate) return;
+            _didCreate = true;
+
+            // Each editor window contains a root VisualElement object
+            VisualElement root = rootVisualElement;
+            root.AddToClassList("root");
+
+            // Import UXML
+            var visualTree = ConsoledResources.WindowAsset();
+            visualTree.CloneTree(root);
+
+            // A stylesheet can be added to a VisualElement.
+            // The style will be applied to the VisualElement and all of its children.
+            var styleSheet = ConsoledResources.StyleSheet();
+            root.styleSheets.Add(styleSheet);
+
+            SetupInstance();
+            AttachInput();
+            AttachOutput();
+            HandleStatus();
+        }
+
+        private void SetupInstance()
+        {
+            if (_instance != null)
+            {
+                _instance = new ConsoledInstance();
+            }
+        }
+
+        private void Destroy()
         {
             if (!_didCreate) return;
             _didCreate = false;
@@ -78,14 +104,14 @@ namespace Akaal.Consoled.Editor
             _status = rootVisualElement.Q<Label>(name: "status-text");
             rootVisualElement.schedule.Execute(() =>
                               {
-                                  if (!Consoled.IsReady && _readyState)
+                                  if (!_instance.IsReady && _readyState)
                                   {
                                       _readyState = false;
                                       SetStatusText("Reloading commands...");
                                       _input.SetEnabled(false);
                                       _submit.SetEnabled(false);
                                   }
-                                  else if (Consoled.IsReady && !_readyState)
+                                  else if (_instance.IsReady && !_readyState)
                                   {
                                       _readyState = true;
                                       SetStatusText("Ready.");
@@ -99,13 +125,13 @@ namespace Akaal.Consoled.Editor
         private void AttachOutput()
         {
             var outputText = rootVisualElement.Q<Label>("console-text");
-            foreach (string s in Consoled.GetOutputHistory())
+            foreach (string s in _instance.OutputHistory)
             {
                 outputText.text += s;
             }
 
-            Consoled.Context.OnMemoryUpdated += MemoryUpdated;
-            Consoled.SetColorTranslator((text, color) =>
+            _instance.Context.OnMemoryUpdated += MemoryUpdated;
+            _instance.SetColorTranslator((text, color) =>
             {
                 return text;
                 //todo -- solve rich text
@@ -114,8 +140,8 @@ namespace Akaal.Consoled.Editor
                 string hex = ColorUtility.ToHtmlStringRGB(color.Value);
                 return $"<color=#{hex}>{text}</color>";*/
             });
-            Consoled.SetClearHandler(() => { outputText.text      =  string.Empty; });
-            Consoled.SetOutputHandler((text) => { outputText.text += text; });
+            _instance.SetClearHandler(() => { outputText.text      =  string.Empty; });
+            _instance.SetOutputHandler((text) => { outputText.text += text; });
         }
 
         private void AttachInput()
@@ -182,7 +208,7 @@ namespace Akaal.Consoled.Editor
 
         private void Validate()
         {
-            int cmdHistorySize = Consoled.GetCommandHistory().Size;
+            int cmdHistorySize = _instance.CommandHistory.Size;
             _commandOffset = Mathf.Clamp(_commandOffset, -1, cmdHistorySize - 1);
         }
 
@@ -195,13 +221,13 @@ namespace Akaal.Consoled.Editor
             }
             else
             {
-                _input.value = Consoled.GetCommandHistory()[_commandOffset];
+                _input.value = _instance.CommandHistory[_commandOffset];
             }
         }
 
         private void SubmitCommand()
         {
-            Consoled.SubmitCommand(_input.value);
+            _instance.SubmitCommand(_input.value);
             _tempCommand   = string.Empty;
             _commandOffset = -1;
             UpdateTypedCommand();
@@ -220,9 +246,9 @@ namespace Akaal.Consoled.Editor
 
         private void DetachOutput()
         {
-            Consoled.Context.OnMemoryUpdated -= MemoryUpdated;
-            Consoled.SetColorTranslator(null);
-            Consoled.SetOutputHandler(Debug.Log);
+            _instance.Context.OnMemoryUpdated -= MemoryUpdated;
+            _instance.SetColorTranslator(null);
+            _instance.SetOutputHandler(Debug.Log);
         }
 
         #region Memory
@@ -235,7 +261,7 @@ namespace Akaal.Consoled.Editor
                 _memoryPanel = rootVisualElement.Q("memory");
             sb.Clear();
 
-            foreach (var kvp in Consoled.Context.Memory)
+            foreach (var kvp in _instance.Context.Memory)
             {
                 sb.Append(kvp.Key);
                 sb.Append('<');
