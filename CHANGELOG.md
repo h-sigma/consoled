@@ -10,7 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modules for easily enabling/disabling groups of methods.
 - Rich text support.
 
-## [0.0.3] - 2021-04-08
+## [0.0.4] - 2021-04-08
+### Added
+- Consoled instances
+- Multiple editor window support
+
+## [0.0.3] - 2021-04-07
 ### Added
 - Enum parameter support
 

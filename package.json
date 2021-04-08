@@ -2,7 +2,7 @@
   "name": "com.akaal.consoled",
   "displayName": "Consoled",
   "description": "Consoled lets you run functions for debugging or cheats during the editor and at runtime.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "unity": "2018.1",
   "license": "MIT",
   "repository": {
