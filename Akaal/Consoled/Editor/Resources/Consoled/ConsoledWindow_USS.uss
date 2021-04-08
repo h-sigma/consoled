@@ -6,7 +6,7 @@ Label {
     --primary-color: rgb(68, 138, 255);
     --primary-shade: rgb(42, 85, 157);
     --secondary-color: rgb(255, 253, 96);
-    --font : resource("CascadiaMono");
+    --font : resource("Consoled/CascadiaMono");
 }
 
 .root {
