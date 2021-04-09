@@ -4,7 +4,7 @@ namespace Akaal.Consoled.Adapters
 {
     public interface IValueAdapter
     {
-        Type TargetType { get; }
-        bool TryAdaptValue(object value, out object result, out string errorMessage);
+        bool CanAdapt(Type targetType);
+        bool TryAdaptValue(object value, Type targetType, out object result, out string errorMessage);
     }
 }

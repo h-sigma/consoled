@@ -6,8 +6,10 @@ namespace Akaal.Consoled.Adapters
 {
     public class ValueAdapterCollection
     {
-        private readonly Dictionary<Type, List<IValueAdapter>> _adaptersByTargetType =
-            new Dictionary<Type, List<IValueAdapter>>();
+        /*private readonly Dictionary<Type, List<IValueAdapter>> _adaptersByTargetType =
+            new Dictionary<Type, List<IValueAdapter>>();*/
+
+        private static readonly List<IValueAdapter> _adapters = new List<IValueAdapter>();
 
         public ValueAdapterCollection()
         {
@@ -37,13 +39,14 @@ namespace Akaal.Consoled.Adapters
                 throw new Exception($"Critical error in logic. Type {type.Name} must derive from type IValueAdapter.");
             }
 
+            /*
             if (!_adaptersByTargetType.TryGetValue(adapter.TargetType, out var list))
             {
                 list                                      = new List<IValueAdapter>();
                 _adaptersByTargetType[adapter.TargetType] = list;
-            }
+            }*/
 
-            list.Add(adapter);
+            _adapters.Add(adapter);
         }
 
         public bool TryAdaptValue(Type targetType, object valueToAdapt, out object adaptedValue,
@@ -55,11 +58,12 @@ namespace Akaal.Consoled.Adapters
             {
                 return TryAdaptEnum(targetType, valueToAdapt, out adaptedValue, out errorMessage);
             }
-            else if (_adaptersByTargetType.TryGetValue(targetType, out var adapters))
+            else //if (_adaptersByTargetType.TryGetValue(targetType, out var adapters))
             {
-                foreach (IValueAdapter adapter in adapters)
+                foreach (IValueAdapter adapter in /*adapters*/ _adapters)
                 {
-                    if (adapter.TryAdaptValue(valueToAdapt, out adaptedValue, out errorMessage)) return true;
+                    if (adapter.CanAdapt(targetType) && adapter.TryAdaptValue(valueToAdapt, targetType, out adaptedValue, out errorMessage))
+                        return true;
                 }
             }
 

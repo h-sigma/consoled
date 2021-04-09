@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modules for easily enabling/disabling groups of methods.
 - Rich text support.
 
+## [0.1.1] - 2021-04-09
+## Changes
+- Value adapters now support advanced type adapting using the bool CanAdapt(Type targetType) method.
+
 ## [0.1.0] - 2021-04-09
 ### Added
 - Imgui Window for runtime console

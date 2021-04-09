@@ -22,15 +22,9 @@ namespace Akaal.Consoled.Adapters
 
         #region Implementation of IValueAdapter
 
-        public Type TargetType => typeof(Type);
+        public bool CanAdapt(Type targetType) => targetType == typeof(string) || targetType == typeof(Type);
 
-        public bool CanAdapt(object value)
-        {
-            Type t = value.GetType();
-            return t == typeof(string) || t == typeof(Type);
-        }
-
-        public bool TryAdaptValue(object value, out object result, out string errorMessage)
+        public bool TryAdaptValue(object value, Type targetType, out object result, out string errorMessage)
         {
             errorMessage = null;
             result       = null;
@@ -51,6 +45,11 @@ namespace Akaal.Consoled.Adapters
                 {
                     return true;
                 }
+            }
+            else if (value is Type)
+            {
+                result = value;
+                return true;
             }
 
             return false;

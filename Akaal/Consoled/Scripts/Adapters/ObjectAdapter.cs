@@ -6,9 +6,9 @@ namespace Akaal.Consoled.Adapters
     {
         #region Implementation of IValueAdapter
 
-        public Type TargetType => typeof(object);
+        public bool CanAdapt(Type targetType) => targetType == typeof(object);
 
-        public bool TryAdaptValue(object value, out object result, out string errorMessage)
+        public bool TryAdaptValue(object value, Type targetType, out object result, out string errorMessage)
         {
             errorMessage = null;
             result       = value;
