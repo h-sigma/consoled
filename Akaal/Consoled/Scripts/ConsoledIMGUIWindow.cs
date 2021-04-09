@@ -4,29 +4,18 @@ using UnityEngine;
 
 public class ConsoledIMGUIWindow : MonoBehaviour
 {
-    public bool isDisplayedBasedOnGameObject = true;
-    public int  outputFontSize               = 20;
-    public int  inputFontSize                = 20;
-
-    private Rect          drawRect;
-    private RectTransform rectTransform;
-
-    private void Awake()
-    {
-        rectTransform = GetComponent<RectTransform>();
-        rectTransform.pivot = Vector2.zero;
-    }
-
-    private Vector3[] corners = new Vector3[4];
-
-    private void OnRectTransformDimensionsChange()
-    {
-        if (rectTransform == null) return;
-        //rectTransform.GetWorldCorners(corners);
-        drawRect          =  rectTransform.rect;
-        drawRect.height -= rectTransform.anchoredPosition.y;
-        drawRect.x += rectTransform.anchoredPosition.x;
-    }
+    public  bool  isDisplayedBasedOnGameObject = true;
+    public  int   outputFontSize               = 30;
+    public  int   headerFontSize               = 30;
+    public  int   inputFontSize                = 30;
+    public  float top;
+    public  float left;
+    public  float right;
+    public  float bottom;
+    public  float heightScreenNormalized;
+    public  float widthScreenNormalized;
+    public  float consoleWidthNormalized = 0.8f;
+    private Rect  drawRect;
 
     private void OnEnable()
     {
@@ -44,6 +33,7 @@ public class ConsoledIMGUIWindow : MonoBehaviour
 
     public GUIStyle headerStyle        { get; private set; }
     public GUIStyle consoleOutputStyle { get; private set; }
+    public GUIStyle memoryOutputStyle  { get; private set; }
     public GUIStyle inputFieldStyle    { get; private set; }
 
     private void SetupStyles()
@@ -53,7 +43,7 @@ public class ConsoledIMGUIWindow : MonoBehaviour
             headerStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize  = 40
+                fontSize  = headerFontSize
             };
         }
 
@@ -64,9 +54,23 @@ public class ConsoledIMGUIWindow : MonoBehaviour
                 alignment = TextAnchor.UpperLeft,
                 fontSize  = outputFontSize,
                 wordWrap  = true,
-                font      = ConsoledResources.Font()
+                font      = ConsoledResources.Font(),
+                richText  = true
             };
         }
+
+        if (memoryOutputStyle == null)
+        {
+            memoryOutputStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.UpperCenter,
+                fontSize  = outputFontSize,
+                wordWrap  = true,
+                font      = ConsoledResources.Font(),
+                richText  = true
+            };
+        }
+
 
         if (inputFieldStyle == null)
         {
@@ -94,7 +98,7 @@ public class ConsoledIMGUIWindow : MonoBehaviour
 
     private GUIContent outputText = new GUIContent();
 
-    private string memoryText;
+    private GUIContent memoryText = new GUIContent();
 
     private float lastTextRectWidth;
 
@@ -103,13 +107,41 @@ public class ConsoledIMGUIWindow : MonoBehaviour
         if (!isShown) return;
         Validate();
         GUILayout.BeginHorizontal();
-        if (rectTransform == null) drawRect = new Rect(0, 0, Screen.width, Screen.height / 2f);
 
+        drawRect = GetDrawRect();
+
+        DrawConsole();
+
+        DrawMemory();
+    }
+
+    public bool ShowMemoryPanel => memoryText.text?.Length > 0;
+
+    private void DrawMemory()
+    {
+        if (!ShowMemoryPanel) return;
+        //memory drawing
+        Rect memoryRect = new Rect(drawRect.x + drawRect.width * consoleWidthNormalized, drawRect.y,
+            drawRect.width * (1 - consoleWidthNormalized), drawRect.height);
+        GUI.Box(memoryRect, "Memory");
+
+        memoryRect.width -= 20;
+        float textHeight = consoleOutputStyle.CalcHeight(memoryText, memoryRect.width);
+        var   textRect   = new Rect(0, 0, memoryRect.width, textHeight);
+        memoryScrollPos = GUI.BeginScrollView(memoryRect, memoryScrollPos,
+            textRect);
+
+        GUI.Label(textRect, memoryText, memoryOutputStyle);
+        GUI.EndScrollView();
+    }
+
+    private void DrawConsole()
+    {
         //console drawing
-        Rect consoleRect = new Rect(drawRect.x, drawRect.y, drawRect.width - 100, drawRect.height);
+        Rect consoleRect = new Rect(drawRect.x, drawRect.y, drawRect.width * (ShowMemoryPanel ? consoleWidthNormalized : 1f), drawRect.height);
         GUI.Box(consoleRect, "Consoled");
 
-        consoleRect.height -= 25f;
+        consoleRect.height -= inputFontSize     + 10;
         lastTextRectWidth  =  consoleRect.width - 20;
         var textRect = new Rect(0, 0, lastTextRectWidth, GetOutputTextHeight());
 
@@ -120,7 +152,7 @@ public class ConsoledIMGUIWindow : MonoBehaviour
         GUI.EndScrollView();
 
         consoleRect.y      += consoleRect.height;
-        consoleRect.height =  25;
+        consoleRect.height =  inputFontSize + 10;
         consoleRect.width  -= 50;
         command            =  GUI.TextField(consoleRect, command, inputFieldStyle);
         consoleRect.x      += consoleRect.width;
@@ -134,9 +166,12 @@ public class ConsoledIMGUIWindow : MonoBehaviour
         }
 
         GUI.enabled = guiEnabled;
+    }
 
-        Rect memoryRect = new Rect(drawRect.x + drawRect.width - 100, drawRect.y, 100, drawRect.height);
-        GUI.Box(memoryRect, "Memory");
+    private Rect GetDrawRect()
+    {
+        return new Rect(left, top, Screen.width * widthScreenNormalized  - left - right,
+            Screen.height                       * heightScreenNormalized - top  - bottom);
     }
 
     private float GetOutputTextHeight()
@@ -181,5 +216,15 @@ public class ConsoledIMGUIWindow : MonoBehaviour
             outputText.text    += str;
             consoleScrollPos.y =  GetOutputTextHeight();
         });
+        _consoled.SetColorTranslator((text, color) =>
+        {
+            if (!color.HasValue) return text;
+            string hex = ColorUtility.ToHtmlStringRGB(color.Value);
+            return $"<color=#{hex}>{text}</color>";
+        });
+        _consoled.Context.OnMemoryUpdated += () =>
+        {
+            memoryText.text = _consoled.Context.GetUserFriendlyMemoryRepresentation();
+        };
     }
 }

@@ -13,6 +13,7 @@ namespace Akaal.Consoled
             public Color Warning     = Color.yellow;
             public Color Important   = Color.magenta;
             public Color Information = Color.white;
+            public Color Command     = Color.green;
 
             public ConsoledTheme ShallowCopy()
             {
@@ -30,7 +31,7 @@ namespace Akaal.Consoled
         {
             Theme = from.Theme.ShallowCopy();
         }
-        
+
         #endregion
     }
 }

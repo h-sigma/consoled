@@ -91,7 +91,6 @@ namespace Akaal.Consoled.Editor
         private VisualElement _memoryPanel;
         private Label         _memoryLabel;
         private ScrollView    _consoleScrollView;
-        private StringBuilder sb = new StringBuilder();
         private TextField     _input;
         private Button        _submit;
         private Label         _status;
@@ -259,17 +258,8 @@ namespace Akaal.Consoled.Editor
                 _memoryLabel = rootVisualElement.Q<Label>("memory-text");
             if (_memoryPanel == null)
                 _memoryPanel = rootVisualElement.Q("memory");
-            sb.Clear();
 
-            foreach (var kvp in _instance.Context.Memory)
-            {
-                sb.Append(kvp.Key);
-                sb.Append('<');
-                sb.Append(kvp.Value.GetType().Name);
-                sb.Append(">\n");
-            }
-
-            _memoryLabel.text = sb.ToString();
+            _memoryLabel.text = _instance.Context.GetUserFriendlyMemoryRepresentation();
             if (string.IsNullOrEmpty(_memoryLabel.text))
             {
                 _memoryPanel.visible = false;

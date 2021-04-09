@@ -45,7 +45,7 @@ namespace Akaal.Consoled
 
         private void ExecuteRawCommand(string rawCommand)
         {
-            WriteOut("\n> " + rawCommand, Theme.Error);
+            WriteOut("\n> " + rawCommand, Theme.Command);
             bool isValid = _commandParser.Parse(rawCommand + ' ', out string error, out string commandName,
                 out object[] parameters, out VariableReference target, out VariableReference assignment);
             _commandsHistory.PushFront(rawCommand);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Akaal.Consoled
 {
@@ -12,13 +13,36 @@ namespace Akaal.Consoled
 
         public Context(IConsole console, CommandLibrary commandLibrary)
         {
-            Console        = console;
-            CommandLibrary = commandLibrary;
+            Console         =  console;
+            CommandLibrary  =  commandLibrary;
+            OnMemoryUpdated += () => _memoryDirty = true;
         }
 
         public IConsole Console { get; }
 
         public IReadOnlyDictionary<string, object> Memory => _memory;
+
+        private bool          _memoryDirty;
+        private StringBuilder sb                  = new StringBuilder();
+        private string        _lastRepresentation = string.Empty;
+
+        public string GetUserFriendlyMemoryRepresentation()
+        {
+            if (!_memoryDirty) return _lastRepresentation;
+            sb.Clear();
+
+            foreach (var kvp in _memory)
+            {
+                sb.Append(kvp.Key);
+                sb.Append('<');
+                sb.Append(kvp.Value.GetType().Name);
+                sb.Append(">\n");
+            }
+
+            _lastRepresentation = sb.ToString();
+            _memoryDirty        = false;
+            return _lastRepresentation;
+        }
 
         public object GetVariable(VariableReference varRef)
         {
