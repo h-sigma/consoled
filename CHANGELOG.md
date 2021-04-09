@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modules for easily enabling/disabling groups of methods.
 - Rich text support.
 
+## [0.1.0] - 2021-04-09
+### Added
+- Imgui Window for runtime console
+## Changes
+- User friendly memory representation can now be gotten from Context directly.
+
 ## [0.0.4] - 2021-04-08
 ### Added
 - Consoled instances
