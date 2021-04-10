@@ -1,12 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using Akaal.Consoled.Attributes;
 using UnityEngine;
 
 namespace Akaal.Consoled.Commands
 {
-    public static class ConsoledCoreCommands
+    internal static class ConsoledCoreCommands
     {
         [Command("reload", "reloads the command library. (profiler reasons)")]
         public static void Reload(Context ctx)
@@ -14,51 +12,40 @@ namespace Akaal.Consoled.Commands
             ctx.CommandLibrary.Load();
         }
 
-        [Command("help", "lists all commands registered.")]
-        public static void ListAllCommands(Context ctx, string moduleName = null, bool showDescription = false)
+        [Command("commands", "lists all commands registered, optionally only those matching a partial command.")]
+        public static void ListAllCommands(Context ctx, string partialCommand = null,
+            bool showDescription = false)
         {
-            var commands = ctx.CommandLibrary.GetCommandsByModule();
-            var sb       = new StringBuilder();
+            var  commands = ctx.CommandLibrary.GetCommandsByModule();
+            var  sb       = new StringBuilder();
+            bool doCheck  = !string.IsNullOrEmpty(partialCommand);
+            partialCommand = partialCommand?.ToLower();
+            bool didNotFind = doCheck;
             foreach (var module in commands)
             {
-                if (!string.IsNullOrEmpty(moduleName) && !module.Key.ModuleName.ToLower().Contains(moduleName)) continue;
-
-                sb.Append("\n  ").Append(module.Key.ModuleName);
-                foreach (Command command in module.Value)
+                if (!doCheck)
                 {
-                    sb.Append("\n      ").Append(command.CommandName);
-                    for (int index = 0; index < command.Parameters.Length; index++)
+                    ConsoledShared.PrintModule(showDescription, sb, module);
+                }
+                else
+                {
+                    foreach (Command command in module.Value)
                     {
-                        bool first = index == 0;
-                        bool last  = index == command.Parameters.Length - 1;
-
-                        Parameter par = command.Parameters[index];
-                        if (first)
+                        if (command.CommandName.ToLower().Contains(partialCommand))
                         {
-                            if (par.ParameterType == typeof(Context))
-                            {
-                                //if (command.Parameters.Length > 1) sb.Append('(');
-                                continue;
-                            }
+                            ConsoledShared.PrintCommand(showDescription, sb, command);
+                            didNotFind = false;
                         }
-
-                        //sb.Append(par.ParameterType.Name).Append(' ');
-                        char left  = par.IsRequired ? '<' : '_';
-                        char right = par.IsRequired ? '>' : '_';
-                        sb.Append(' ').Append(left).Append(par.Name).Append(right);
-
-                        //if (!last) sb.Append(", ");
-                        //else sb.Append(')');
-                    }
-
-                    if (showDescription)
-                    {
-                        sb.Append(":\t").Append(command.Attr.Description).Append('\t');
                     }
                 }
             }
 
-            ctx.Console.WriteOut(sb.ToString(), Color.HSVToRGB(0.83f, 0.01f, 0.76f));
+            if (didNotFind)
+            {
+                sb.AppendLine($"No command like '{partialCommand}' found.");
+            }
+
+            ctx.Console.WriteOut(sb.ToString());
         }
 
         [Command("clear", "clears the console output.")]

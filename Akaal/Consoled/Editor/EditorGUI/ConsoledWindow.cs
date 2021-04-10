@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
@@ -95,6 +96,7 @@ namespace Akaal.Consoled.Editor
         private Button        _submit;
         private Label         _status;
         private bool          _readyState = true;
+        private Label         _outputText;
 
         #endregion
 
@@ -123,10 +125,11 @@ namespace Akaal.Consoled.Editor
 
         private void AttachOutput()
         {
-            var outputText = rootVisualElement.Q<Label>("console-text");
+            _consoleScrollView = rootVisualElement.Q<ScrollView>("console-text-scrollview");
+            _outputText        = rootVisualElement.Q<Label>("console-text");
             foreach (string s in _instance.OutputHistory)
             {
-                outputText.text += s;
+                _outputText.text += s;
             }
 
             _instance.Context.OnMemoryUpdated += MemoryUpdated;
@@ -139,8 +142,20 @@ namespace Akaal.Consoled.Editor
                 string hex = ColorUtility.ToHtmlStringRGB(color.Value);
                 return $"<color=#{hex}>{text}</color>";*/
             });
-            _instance.SetClearHandler(() => { outputText.text      =  string.Empty; });
-            _instance.SetOutputHandler((text) => { outputText.text += text; });
+            _instance.SetClearHandler(() => { _outputText.text = string.Empty; });
+            _instance.SetOutputHandler((text) =>
+            {
+                _outputText.text += text;
+                rootVisualElement.schedule.Execute(() =>
+                                      Scroll(_consoleScrollView, _outputText.contentRect.height, 1)).
+                                  StartingIn(50);
+            });
+        }
+
+        private static void Scroll(ScrollView scrollView, float height, float normalizedFromTop)
+        {
+            if (height * normalizedFromTop < scrollView.contentRect.height) return;
+            scrollView.scrollOffset = Vector2.up * height * normalizedFromTop;
         }
 
         private void AttachInput()
@@ -227,13 +242,11 @@ namespace Akaal.Consoled.Editor
         private void SubmitCommand()
         {
             _instance.SubmitCommand(_input.value);
+            //TextField has child TextInput of type 'TextField.TextInput' that is private and is the thing we want to focus
+            _input.Children().FirstOrDefault()?.Focus();
             _tempCommand   = string.Empty;
             _commandOffset = -1;
             UpdateTypedCommand();
-            _input.SelectAll();
-            if (_consoleScrollView == null)
-                _consoleScrollView = rootVisualElement.Q<ScrollView>("console-text-scrollview");
-            _consoleScrollView.scrollOffset = Vector2.up * _consoleScrollView.contentRect.height;
         }
 
         private void TrySaveTempCommand()

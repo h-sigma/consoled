@@ -16,6 +16,7 @@ Label {
 
 #status-bar {
     max-height: 20px;
+    min-height: 14px;
     background-color: var(--primary-shade);
 }
 
