@@ -6,25 +6,35 @@
         xsi:noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd"
 >
     <engine:VisualElement name="consoled-root">
-        <engine:VisualElement name="console">
-            <engine:Label class="header" text="Console"/>
-            <engine:ScrollView name="console-text-scrollview" mode="Vertical" elasticity="0.1" vertical-page-size="20"
-                               show-vertical-scroller="true"
-                               show-horizontal-scroller="false">
-                <engine:Label name="console-text"/>
-            </engine:ScrollView>
-           
-            <engine:VisualElement class="console-input-bar">
-                <engine:TextField name="console-input" multiline="false"/>
-                <engine:Button name="console-submit" text="Run"/>
+        <engine:VisualElement name="header-bar">
+            <engine:VisualElement name="header-info">
+                <engine:Label class="header" text="Consoled"/>
+            </engine:VisualElement>
+            <engine:VisualElement class="button-list">
+                <engine:Button class="button" name="memory-button" text="Memory"/>
             </engine:VisualElement>
         </engine:VisualElement>
-        <engine:VisualElement name="memory">
-            <engine:Label class="header" text="Memory"/>
-            <engine:Label name="memory-text"/>
+        <engine:VisualElement name="main-view">
+            <engine:ScrollView mode="Vertical" elasticity="0.1" vertical-page-size="20"
+                               show-vertical-scroller="false"
+                               show-horizontal-scroller="false">
+                <engine:VisualElement name="console-view">
+                    <engine:Label name="console-text"/>
+                    <engine:VisualElement name="memory-view">
+                        <engine:Label name="memory-text"/>
+                    </engine:VisualElement>
+                </engine:VisualElement>
+            </engine:ScrollView>
+            <engine:VisualElement name="console-input-bar">
+                <engine:VisualElement name="console-input-bar__inner">
+                    <engine:VisualElement class="shadow"/>
+                    <engine:TextField name="console-input" multiline="false"/>
+                    <engine:Button name="console-submit" class="button" text="Run"/>
+                </engine:VisualElement>
+            </engine:VisualElement>
         </engine:VisualElement>
-    </engine:VisualElement>
-    <engine:VisualElement name="status-bar">
-        <engine:Label name="status-text"/>
+        <engine:VisualElement name="status-bar">
+            <engine:Label name="status-text" text="Ready..."/>
+        </engine:VisualElement>
     </engine:VisualElement>
 </engine:UXML>

@@ -125,12 +125,25 @@ namespace Akaal.Consoled.Editor
 
         private void AttachOutput()
         {
-            _consoleScrollView = rootVisualElement.Q<ScrollView>("console-text-scrollview");
+            _consoleScrollView = rootVisualElement.Q("main-view").Q<ScrollView>();
             _outputText        = rootVisualElement.Q<Label>("console-text");
             foreach (string s in _instance.OutputHistory)
             {
                 _outputText.text += s;
             }
+
+            _memoryLabel = rootVisualElement.Q<Label>("memory-text");
+            _memoryPanel = rootVisualElement.Q("memory-view");
+
+            var memoryButton = rootVisualElement.Q<Button>("memory-button");
+            memoryButton.AddToClassList("selected");
+            _memoryPanel.visible = false;
+            memoryButton.clicked += () =>
+            {
+                _memoryPanel.visible ^= true;
+                if(_memoryPanel.visible) memoryButton.AddToClassList("selected");
+                else memoryButton.RemoveFromClassList("selected");
+            };
 
             _instance.Context.OnMemoryUpdated += MemoryUpdated;
             _instance.SetColorTranslator((text, color) =>
@@ -154,7 +167,7 @@ namespace Akaal.Consoled.Editor
 
         private static void Scroll(ScrollView scrollView, float height, float normalizedFromTop)
         {
-            if (height * normalizedFromTop < scrollView.contentRect.height) return;
+            if (height                           * normalizedFromTop < scrollView.contentRect.height) return;
             scrollView.scrollOffset = Vector2.up * height * normalizedFromTop;
         }
 
@@ -267,11 +280,6 @@ namespace Akaal.Consoled.Editor
 
         private void MemoryUpdated()
         {
-            if (_memoryLabel == null)
-                _memoryLabel = rootVisualElement.Q<Label>("memory-text");
-            if (_memoryPanel == null)
-                _memoryPanel = rootVisualElement.Q("memory");
-
             _memoryLabel.text = _instance.Context.GetUserFriendlyMemoryRepresentation();
             if (string.IsNullOrEmpty(_memoryLabel.text))
             {
