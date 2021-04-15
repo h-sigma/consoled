@@ -101,16 +101,16 @@
     flex: 1 1 auto;
 }
 
-#main-view > ScrollView {
-    flex: 1 1 auto;
-    background-color: var(--primary-color);
+#main-view ScrollView {
+    flex: 10 0 auto;
 }
 
 #console-view {
-    flex: 1 0 auto;
+    flex: 1 1 auto;
     padding-left: 10px;
     flex-direction: row;
     align-content: stretch;
+    background-color: var(--primary-color);
 }
 
 #console-text {
@@ -169,6 +169,7 @@
     align-items: stretch;
     background-color: var(--primary-shade);
     margin: 10px;
+    display: none;
 }
 
 #memory-text {

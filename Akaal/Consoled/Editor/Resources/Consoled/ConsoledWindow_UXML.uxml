@@ -15,16 +15,16 @@
             </engine:VisualElement>
         </engine:VisualElement>
         <engine:VisualElement name="main-view">
-            <engine:ScrollView mode="Vertical" elasticity="0.1" vertical-page-size="20"
-                               show-vertical-scroller="false"
-                               show-horizontal-scroller="false">
-                <engine:VisualElement name="console-view">
+            <engine:VisualElement name="console-view">
+                <engine:ScrollView mode="Vertical" elasticity="0.1" vertical-page-size="20"
+                                   show-vertical-scroller="false"
+                                   show-horizontal-scroller="false">
                     <engine:Label name="console-text"/>
-                    <engine:VisualElement name="memory-view">
-                        <engine:Label name="memory-text"/>
-                    </engine:VisualElement>
+                </engine:ScrollView>
+                <engine:VisualElement name="memory-view">
+                    <engine:Label name="memory-text"/>
                 </engine:VisualElement>
-            </engine:ScrollView>
+            </engine:VisualElement>
             <engine:VisualElement name="console-input-bar">
                 <engine:VisualElement name="console-input-bar__inner">
                     <engine:VisualElement class="shadow"/>

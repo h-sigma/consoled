@@ -140,9 +140,16 @@ namespace Akaal.Consoled.Editor
             _memoryPanel.visible = false;
             memoryButton.clicked += () =>
             {
-                _memoryPanel.visible ^= true;
-                if(_memoryPanel.visible) memoryButton.AddToClassList("selected");
-                else memoryButton.RemoveFromClassList("selected");
+                if(_memoryPanel.style.display == DisplayStyle.None)
+                {
+                    _memoryPanel.style.display = DisplayStyle.Flex;
+                    memoryButton.AddToClassList("selected");
+                }
+                else
+                {
+                    _memoryPanel.style.display = DisplayStyle.None;
+                    memoryButton.RemoveFromClassList("selected");
+                }
             };
 
             _instance.Context.OnMemoryUpdated += MemoryUpdated;

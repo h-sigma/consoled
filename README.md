@@ -40,6 +40,8 @@ Use the Unity Package Manager to download from this git url. This lets you fetch
 
 The Consoled editor window can be found under "Window > Tools > Consoled". You may open multiple windows in the editor. Each has its own instance.
 
+![Consoled Editor Window](.readme/editor-window.png "Consoled Editor Window")
+
 For Runtime, currently only IMGUI is supported. Attach the script "Consoled IMGUI" to any gameobject. You can use gameobject's active state to control whether the window is shown or not.
 
 
